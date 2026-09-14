@@ -450,8 +450,11 @@ body.admin-mode #switchToRegister{display:none}
 
 <script>
 const SESSION_KEY='presensiSession',USERS_KEY='presensiUsers';
+const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxNoxMP4BpRbytR5u4xTp2SuQAHZINXSWRvxgzBvHgTArh-hIMcUaJaItzo9bMAmDyGhw/exec';
+const SHEET_URL='https://docs.google.com/spreadsheets/d/1oSruZCsg6TQqdfh2J3cFthv3-tFHwPEmfkMHg_BtTec/edit?usp=sharing';
 const $=id=>document.getElementById(id);
 let selectedRole='user';
+let mahasiswaData=[];
 
 const ROLE_CONTENT = {
   user: {
@@ -524,6 +527,28 @@ function applyRoleContent(role){
   hideErr('loginError');
 }
 
+async function loadMahasiswaData(){
+  // Priority 1: Load dari localStorage dulu (faster)
+  const cached=localStorage.getItem('mahasiswaData');
+  if(cached)try{mahasiswaData=JSON.parse(cached);console.log('✓ Mahasiswa (localStorage):',mahasiswaData.length,'records');mahasiswaData.forEach((m,i)=>console.log(`  ${i+1}. ${m.nim} - ${m.nama}`));}catch{console.error('Error parse localStorage')}
+  
+  // Priority 2: Refresh dari Google Sheets
+  try{
+    console.log('📡 Fetch dari Google Sheets...');
+    const r=await fetch(WEB_APP_URL+'?action=get_all',{signal:AbortSignal.timeout(8000)});
+    console.log('📊 Response status:',r.status,r.statusText);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    console.log('📥 Data diterima:',data);
+    console.log('📥 Tipe:',typeof data,'Array?',Array.isArray(data),'Panjang:',data?.length);
+    if(Array.isArray(data)&&data.length>0){
+      mahasiswaData=data;
+      localStorage.setItem('mahasiswaData',JSON.stringify(data));
+      console.log('✓ Mahasiswa (Google Sheets):',mahasiswaData.length,'records');
+      mahasiswaData.forEach((m,i)=>console.log(`  ${i+1}. ${m.nim} - ${m.nama}`));
+    }
+  }catch(err){console.warn('⚠ Google Sheets timeout/error:',err.message);}
+}
 function initDefaultUsers(){
   const u=JSON.parse(localStorage.getItem(USERS_KEY)||'{}');
   if(!u.admin)u.admin={username:'admin',password:'admin123',role:'admin',nama:'Administrator',createdAt:new Date().toISOString()};
@@ -557,6 +582,7 @@ function switchTab(t){
     $('cardKicker').textContent='// REGISTRATION';
     $('cardTitle').textContent='DAFTAR.';
     $('cardSub').textContent='Buat akun baru untuk mulai presensi';
+    loadMahasiswaData();
   }
   hideErr('loginError');hideErr('regError');
 }
@@ -609,6 +635,15 @@ function doRegister(){
   if(!jurusan){showErr('regError','Jurusan wajib dipilih');$('regJurusan').focus();return}
   if(!pass||pass.length<6){showErr('regError','Password minimal 6 karakter');return}
 
+  const mahasiswaExist=mahasiswaData.find(m=>m.nim===nim);
+  if(!mahasiswaExist){
+    console.warn('NIM tidak ditemukan:',nim);
+    console.log('Daftar NIM yang tersedia:',mahasiswaData.map(m=>m.nim));
+    showErr('regError',`NIM ${nim} tidak terdaftar. Data mahasiswa: ${mahasiswaData.length} records. Hubungi admin.`);
+    return
+  }
+  console.log('✓ NIM ditemukan:',nim,mahasiswaExist)
+
   const users=JSON.parse(localStorage.getItem(USERS_KEY)||'{}');
   if(users[nim]){showErr('regError',`NIM ${nim} sudah terdaftar`);return}
 
@@ -644,8 +679,20 @@ applyTheme(localStorage.getItem('theme')||'light');
 
 setInterval(()=>{$('clockDisplay').textContent=new Date().toLocaleTimeString('id-ID',{hour12:false})},1000);
 
+// DEBUG TOOLS - Gunakan di Console Browser
+window.DEBUG={
+  showMahasiswa:()=>{console.log('Data Mahasiswa:',mahasiswaData);mahasiswaData.forEach((m,i)=>console.log(`${i+1}. ${m.nim} - ${m.nama} (${m.kelas})`));},
+  checkNIM:(nim)=>{const m=mahasiswaData.find(x=>x.nim===nim);console.log(m?'✓ DITEMUKAN: '+JSON.stringify(m):'✗ TIDAK DITEMUKAN');},
+  reloadData:()=>{loadMahasiswaData().then(()=>console.log('✓ Data reload selesai'));},
+  storage:()=>{const c=localStorage.getItem('mahasiswaData');console.log('LocalStorage:',c?JSON.parse(c):null);},
+  reset:()=>{localStorage.removeItem('mahasiswaData');mahasiswaData=[];console.log('✓ localStorage cleared');},
+  testMacro:async()=>{console.log('🧪 Testing Google Apps Script Macro...');try{const r=await fetch(WEB_APP_URL+'?action=get_all');console.log('Status:',r.status);const data=await r.json();console.log('Response:',data);console.log('Type:',typeof data);console.log('Is Array?',Array.isArray(data));console.log('Length:',data?.length);return data;}catch(e){console.error('Error:',e);}}
+};
+console.log('%c🧪 DEBUG TOOLS READY','color:green;font-weight:bold','Gunakan: window.DEBUG.testMacro() untuk test Google Sheets macro');
+
 (function init(){
   initDefaultUsers();
+  loadMahasiswaData();
   const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
   if(s){window.location.href=s.role==='admin'?'admin.html':'absensi.html';return}
   applyRoleContent('user');

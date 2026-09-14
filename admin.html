@@ -1137,7 +1137,7 @@ function switchTab(name){
     $('pageTitle').innerHTML=TITLES[name][1];
     $('pageSub').textContent=TITLES[name][2];
   }
-  if(name==='mahasiswa')renderKelolaMhs();
+  if(name==='mahasiswa'){loadDataMahasiswa();renderKelolaMhs();}
   if(name==='matkul')renderMasterMatkul();
   if(name==='users')renderUsers();
   if(name==='qr')refreshQRKelas();
@@ -1410,21 +1410,29 @@ async function loadDataMahasiswa(){
   try{
     const online=await checkConnection();
     if(!online)throw new Error('Tidak ada koneksi');
+    console.log('📡 Fetch dari Google Sheets...');
     const r=await fetch(WEB_APP_URL+'?action=get_all',{signal:AbortSignal.timeout(15000)});
+    console.log('📊 Response status:',r.status,r.statusText);
     if(!r.ok)throw new Error('HTTP '+r.status);
     const data=await r.json();
+    console.log('📥 Data diterima dari Google Sheets:',data);
+    console.log('📥 Tipe data:',typeof data,'Adalah array?',Array.isArray(data),'Panjang:',data?.length);
     if(Array.isArray(data)&&data.length){
       State.mahasiswaData=data;
       localStorage.setItem('mahasiswaData',JSON.stringify(data));
+      console.log('✅ Data disimpan ke localStorage. Total:',data.length,'records');
+      console.log('   NIM yang tersimpan:',data.map(m=>m.nim));
       renderList();
       if($('tab-mahasiswa').classList.contains('on'))renderKelolaMhs();
       updateInfo();
       return;
     }
-    throw new Error('Data kosong');
+    throw new Error('Data kosong atau format invalid');
   }catch(err){
+    console.error('❌ Error fetch Google Sheets:',err.message);
     const c=localStorage.getItem('mahasiswaData');
-    if(c){try{const p=JSON.parse(c);if(p?.length){State.mahasiswaData=p;renderList();updateInfo();return}}catch{}}
+    console.log('📦 Fallback ke localStorage...');
+    if(c){try{const p=JSON.parse(c);if(p?.length){console.log('✅ Gunakan localStorage:',p.length,'records');State.mahasiswaData=p;renderList();updateInfo();return}}catch{console.error('Error parse localStorage')}}
     if(wrap)wrap.innerHTML=`<div class="empty"><i class="fas fa-triangle-exclamation"></i>GAGAL MEMUAT<small>${err.message}</small></div>`;
   }
 }
@@ -1469,6 +1477,8 @@ async function saveMahasiswa(){
     if(isEdit){const i=State.mahasiswaData.findIndex(m=>m.nim===State.editingNim);if(i>=0)State.mahasiswaData[i]={nim,nama,kelas,jurusan}}
     else State.mahasiswaData.push({nim,nama,kelas,jurusan});
     localStorage.setItem('mahasiswaData',JSON.stringify(State.mahasiswaData));
+    console.log('✓ Mahasiswa disimpan ke localStorage. Total:',State.mahasiswaData.length);
+    console.log('  Data:',{nim,nama,kelas,jurusan});
     renderKelolaMhs();renderList();updateInfo();resetMhsForm();
     toast('success',isEdit?'Data diperbarui':'Data ditambahkan',nama);
   }catch(e){toast('error','Gagal',e.message)}
@@ -1589,6 +1599,16 @@ setInterval(()=>{$('clockText').textContent=new Date().toLocaleTimeString('id-ID
 $('matkulModal')?.addEventListener('click',e=>{
   if(e.target.id==='matkulModal')closeMatkulModal();
 });
+
+// DEBUG TOOLS - Gunakan di Console Browser
+window.DEBUG={
+  showMahasiswa:()=>{console.log('Data Mahasiswa (admin):',State.mahasiswaData);State.mahasiswaData.forEach((m,i)=>console.log(`${i+1}. ${m.nim} - ${m.nama} (${m.kelas})`));},
+  checkNIM:(nim)=>{const m=State.mahasiswaData.find(x=>x.nim===nim);console.log(m?'✓ DITEMUKAN: '+JSON.stringify(m):'✗ TIDAK DITEMUKAN');},
+  storage:()=>{const c=localStorage.getItem('mahasiswaData');console.log('LocalStorage:',c?JSON.parse(c):null);},
+  exportJSON:()=>{console.log(JSON.stringify(State.mahasiswaData,null,2));return State.mahasiswaData;},
+  testMacro:async()=>{console.log('🧪 Testing Google Apps Script Macro...');try{const r=await fetch(WEB_APP_URL+'?action=get_all');console.log('Status:',r.status);const data=await r.json();console.log('Response:',data);console.log('Type:',typeof data);console.log('Is Array?',Array.isArray(data));console.log('Length:',data?.length);return data;}catch(e){console.error('Error:',e);}}
+};
+console.log('%c✓ DEBUG TOOLS READY','color:green;font-weight:bold','Gunakan: window.DEBUG.testMacro() untuk test Google Sheets macro');
 
 async function init(){
   initDefaultMatkul();
