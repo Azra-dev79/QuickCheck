@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Admin — Presensi</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -643,6 +644,25 @@ body::before{
 .footer a{color:var(--rust);text-decoration:none;font-weight:600;border-bottom:2px solid var(--rust);transition:all .15s}
 .footer a:hover{background:var(--rust);color:var(--cream)}
 
+/* SCANNER ADMIN */
+#qr-reader{width:100%!important;height:100%!important;border:none!important}
+#qr-reader video{width:100%!important;height:100%!important;object-fit:cover!important}
+#qr-reader>div:not(:first-child){display:none!important}
+#qr-reader>div:first-child,#qr-reader>div:first-child>div:first-child{width:100%!important;height:100%!important}
+.scanner-container{aspect-ratio:1/1;max-height:500px;background:#0f0d0a;border:var(--border-thin);overflow:hidden;position:relative}
+.scanner-overlay{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;z-index:10}
+.scan-frame{position:relative;width:70%;aspect-ratio:1;box-shadow:0 0 0 4000px rgba(15,13,10,.68)}
+.scan-frame::before,.scan-frame::after,.scan-frame .c-bl,.scan-frame .c-br{position:absolute;width:40px;height:40px;border:4px solid var(--mustard)}
+.scan-frame::before{top:-4px;left:-4px;border-top-width:4px;border-left-width:4px;border-bottom:none;border-right:none}
+.scan-frame::after{top:-4px;right:-4px;border-top-width:4px;border-right-width:4px;border-bottom:none;border-left:none}
+.scan-frame .c-bl{bottom:-4px;left:-4px;border-bottom-width:4px;border-left-width:4px;border-top:none;border-right:none}
+.scan-frame .c-br{bottom:-4px;right:-4px;border-bottom-width:4px;border-right-width:4px;border-top:none;border-left:none}
+.scan-frame .scan-inner{position:absolute;inset:12%;border:2px dashed rgba(212,160,23,.35)}
+.scan-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:10px;color:var(--mustard);letter-spacing:.14em;text-transform:uppercase;font-weight:600;white-space:nowrap}
+.scan-hint{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--cream);background:var(--mustard);padding:10px 16px;border-radius:4px;z-index:20;font-weight:600;letter-spacing:.05em}
+.scan-hint.success{background:var(--moss)}
+.scan-hint.error{background:var(--brick)}
+
 @media(max-width:560px){
   .toast-wrap{left:14px;right:14px;bottom:14px;max-width:none}
 }
@@ -687,6 +707,9 @@ body::before{
       </button>
       <button class="nav-btn" data-tab="users" onclick="switchTab('users')">
         <i class="fas fa-user-gear"></i> User
+      </button>
+      <button class="nav-btn" data-tab="absen" onclick="switchTab('absen')">
+        <i class="fas fa-qrcode"></i> Scan Absen
       </button>
       <button class="nav-btn" data-tab="qr" onclick="switchTab('qr')">
         <i class="fas fa-qrcode"></i> QR & Tool
@@ -909,6 +932,59 @@ body::before{
       </div>
     </section>
 
+    <!-- SCAN ABSEN -->
+    <section class="tab" id="tab-absen">
+      <div class="sec-head">
+        <div>
+          <div class="num">// SCAN · 01</div>
+          <h2>SCAN PRESENSI</h2>
+          <div class="sub">Admin scan QR untuk catat kehadiran mahasiswa</div>
+        </div>
+      </div>
+      
+      <div class="card card-pad">
+        <div style="margin-bottom:16px">
+          <label style="display:block;margin-bottom:8px;font-weight:600;font-size:13px">Pilih Mata Kuliah</label>
+          <select id="adminMatkulSelect" style="width:100%;padding:10px 12px;font-family:'Space Grotesk',sans-serif;border:var(--border-thin);background:var(--cream);color:var(--ink)" onchange="handleMatkulChange()">
+            <option value="">— Pilih Mata Kuliah —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:12px;padding:10px;background:var(--cream-lt);border:var(--border-thin)">
+          <strong>Status:</strong> <span id="scanStatus">Idle</span> | <strong>Total:</strong> <span id="scanTotal">0</span>
+        </div>
+        
+        <div class="scanner-container">
+          <div id="qr-reader"></div>
+          <div class="scanner-overlay">
+            <div class="scan-frame">
+              <div class="scan-inner"></div>
+              <div class="scan-label">// SCAN AREA</div>
+            </div>
+            <div class="scan-hint" id="scanHint">Arahkan QR ke kamera</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;padding:16px;margin-top:0">
+          <button class="btn pri" id="btnScanToggle" onclick="toggleAdminScanner()" style="flex:1">
+            <i class="fas fa-play"></i> <span id="btnScanLabel">Mulai Scan</span>
+          </button>
+          <button class="btn" onclick="resetAdminScanner()" style="flex:0 0 auto">
+            <i class="fas fa-rotate"></i> Reset
+          </button>
+        </div>
+      </div>
+
+      <div class="card card-pad" style="margin-top:20px">
+        <h3 style="margin-bottom:12px;font-size:14px;font-weight:800">Hasil Scan Hari Ini</h3>
+        <div class="list" id="scanResults" style="max-height:400px;overflow-y:auto">
+          <div class="empty"><i class="fas fa-inbox"></i>Belum ada scan</div>
+        </div>
+      </div>
+    </section>
+
     <!-- QR & TOOLS -->
     <section class="tab" id="tab-qr">
       <div class="split">
@@ -1047,7 +1123,7 @@ body::before{
   window.USER_SESSION=s;
 })();
 
-const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxNoxMP4BpRbytR5u4xTp2SuQAHZINXSWRvxgzBvHgTArh-hIMcUaJaItzo9bMAmDyGhw/exec';
+const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxAtNHAnrAV_Qw6PqlDb93x2RkoaohFhG72T2Hp2KlfCnFbvgy914fSG2OGSGCUERoO0A/exec';
 const SHEET_URL='https://docs.google.com/spreadsheets/d/1oSruZCsg6TQqdfh2J3cFthv3-tFHwPEmfkMHg_BtTec/edit?usp=sharing';
 const MASTER_MATKUL_KEY='presensiMatkulMaster';
 const MATKUL_KEY='presensiMatkul';
@@ -1127,6 +1203,7 @@ const TITLES={
   mahasiswa:['// MAHASISWA · 01','KELOLA <span class="rot">DATA</span>.','Tambah, edit, atau hapus mahasiswa'],
   matkul:['// MASTKUL · 01','MATA <span class="rot">KULIAH</span>.','Kelola master mata kuliah'],
   users:['// USER · 01','KELOLA <span class="rot">USER</span>.','Lihat akun yang terdaftar'],
+  absen:['// SCAN · 01','SCAN <span class="rot">PRESENSI</span>.','Admin scan QR untuk catat kehadiran mahasiswa'],
   qr:['// QR · 01','QR & <span class="rot">TOOLS</span>.','Generate QR dan operasi sistem']
 };
 function switchTab(name){
@@ -1140,6 +1217,12 @@ function switchTab(name){
   if(name==='mahasiswa'){loadDataMahasiswa();renderKelolaMhs();}
   if(name==='matkul')renderMasterMatkul();
   if(name==='users')renderUsers();
+  if(name==='absen'){
+    loadDataMahasiswa();
+    populateMatkulSelect();
+    resetAdminScanner();
+    renderScanResults();
+  }
   if(name==='qr'){
     // Ensure data loaded dari localStorage sebelum buat QR
     if(!State.mahasiswaData.length){
@@ -1679,6 +1762,177 @@ setInterval(()=>{$('clockText').textContent=new Date().toLocaleTimeString('id-ID
 $('matkulModal')?.addEventListener('click',e=>{
   if(e.target.id==='matkulModal')closeMatkulModal();
 });
+
+/* ============================================================
+   ADMIN SCAN PRESENSI
+============================================================ */
+let adminScanner={scannerRunning:false,html5QrCode:null,selectedMatkul:null,matkulList:[]};
+let adminScanResults=[];
+
+function populateMatkulSelect(){
+  const select=$('adminMatkulSelect');
+  if(!select)return;
+  adminScanner.matkulList=getMasterMatkul();
+  select.innerHTML='<option value="">— Pilih Mata Kuliah —</option>';
+  adminScanner.matkulList.forEach(m=>{
+    const opt=document.createElement('option');
+    opt.value=m.id;
+    opt.textContent=m.nama+' ('+m.kode+')';
+    select.appendChild(opt);
+  });
+}
+
+function handleMatkulChange(){
+  const select=$('adminMatkulSelect');
+  const id=select.value;
+  if(!id){toast('warning','Pilih matkul','Pilih mata kuliah dulu');return}
+  adminScanner.selectedMatkul=adminScanner.matkulList.find(m=>m.id===id);
+  if(!adminScanner.selectedMatkul)return;
+  $('scanStatus').textContent='READY';
+  toast('info','Siap scan',adminScanner.selectedMatkul.nama);
+}
+
+function toggleAdminScanner(){
+  if(!adminScanner.selectedMatkul){toast('warning','Pilih matkul','Pilih mata kuliah dulu');return}
+  adminScanner.scannerRunning?stopAdminScanner():startAdminScanner();
+}
+
+async function startAdminScanner(){
+  if(adminScanner.scannerRunning)return;
+  try{
+    if(adminScanner.html5QrCode){try{adminScanner.html5QrCode.clear()}catch{}adminScanner.html5QrCode=null}
+    const reader=$('qr-reader');if(reader)reader.innerHTML='';
+    const btn=$('btnScanToggle');
+    btn.innerHTML='<i class="fas fa-stop"></i> <span id="btnScanLabel">Stop Scan</span>';
+    
+    adminScanner.html5QrCode=new Html5Qrcode('qr-reader',{verbose:false});
+    const cfg={fps:10,qrbox:{width:250,height:250},aspectRatio:1};
+    
+    adminScanner.html5QrCode.start({facingMode:'environment'},cfg,onAdminScanSuccess,()=>{})
+    .then(()=>{
+      adminScanner.scannerRunning=true;
+      $('scanStatus').textContent='SCANNING';
+      $('scanHint').textContent='Scanning QR...';
+    })
+    .catch(e=>{
+      try{
+        adminScanner.html5QrCode.start({facingMode:'user'},cfg,onAdminScanSuccess,()=>{})
+        .then(()=>{
+          adminScanner.scannerRunning=true;
+          $('scanStatus').textContent='SCANNING';
+          $('scanHint').textContent='Scanning QR...';
+        })
+        .catch(()=>{toast('error','Kamera error','Izinkan akses kamera');})
+      }catch{toast('error','Kamera error','Izinkan akses kamera');}
+    })
+  }catch(e){toast('error','Error',e.message);}
+}
+
+function stopAdminScanner(){
+  if(adminScanner.html5QrCode&&adminScanner.scannerRunning){
+    adminScanner.html5QrCode.stop().then(()=>{
+      adminScanner.html5QrCode.clear();adminScanner.html5QrCode=null;adminScanner.scannerRunning=false;
+      $('btnScanToggle').innerHTML='<i class="fas fa-play"></i> <span id="btnScanLabel">Mulai Scan</span>';
+      $('scanStatus').textContent='Stopped';
+      $('scanHint').textContent='Stopped';
+    }).catch(()=>{adminScanner.scannerRunning=false;});
+  }else{adminScanner.scannerRunning=false;}
+}
+
+function resetAdminScanner(){
+  stopAdminScanner();
+  $('adminMatkulSelect').value='';
+  adminScanner.selectedMatkul=null;
+  $('scanStatus').textContent='Idle';
+  $('scanHint').textContent='Arahkan QR ke kamera';
+}
+
+function onAdminScanSuccess(decoded){
+  const nim=decoded.trim();
+  console.log('✓ QR scanned:',nim);
+  
+  if(adminScanner.html5QrCode&&adminScanner.scannerRunning){
+    adminScanner.html5QrCode.stop().then(()=>{adminScanner.scannerRunning=false}).catch(()=>{});
+  }
+  
+  submitAdminPresensi(nim);
+}
+
+async function submitAdminPresensi(nim){
+  if(!adminScanner.selectedMatkul){toast('error','Error','Matkul tidak dipilih');return}
+  
+  const m=State.mahasiswaData.find(x=>x.nim===nim);
+  if(!m){
+    console.log('❌ NIM tidak ditemukan:',nim);
+    $('scanHint').classList.add('error');
+    $('scanHint').textContent='❌ NIM tidak terdaftar';
+    toast('error','Tidak ditemukan',`NIM ${nim} tidak terdaftar`);
+    setTimeout(()=>{
+      $('scanHint').classList.remove('error');
+      $('scanHint').textContent='Arahkan QR ke kamera';
+      startAdminScanner();
+    },2000);
+    return;
+  }
+  
+  const waktu=new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'});
+  console.log('📡 Kirim presensi ke Google Sheets...');
+  
+  try{
+    await fetch(WEB_APP_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'presensi',
+        nim:m.nim,
+        nama:m.nama,
+        kelas:m.kelas||'',
+        jurusan:m.jurusan||'',
+        matakul:adminScanner.selectedMatkul.nama,
+        kode:adminScanner.selectedMatkul.kode||'',
+        status:'Hadir',
+        waktu:waktu
+      })
+    });
+    
+    adminScanResults.unshift({nim,nama:m.nama,matkul:adminScanner.selectedMatkul.nama,waktu,status:'✓ Hadir'});
+    renderScanResults();
+    
+    $('scanHint').classList.add('success');
+    $('scanHint').textContent='✓ '+m.nama+' - Hadir';
+    $('scanTotal').textContent=parseInt($('scanTotal').textContent||'0')+1;
+    toast('success','Presensi OK',`${m.nama} - ${adminScanner.selectedMatkul.nama}`);
+  }catch(e){
+    console.error('Error submit presensi:',e);
+    toast('error','Gagal',e.message);
+  }
+  
+  setTimeout(()=>{
+    $('scanHint').classList.remove('success','error');
+    $('scanHint').textContent='Arahkan QR ke kamera';
+    if(!adminScanner.scannerRunning)startAdminScanner();
+  },2000);
+}
+
+function renderScanResults(){
+  const wrap=$('scanResults');
+  if(!adminScanResults.length){
+    wrap.innerHTML=`<div class="empty"><i class="fas fa-inbox"></i>Belum ada scan</div>`;
+    return;
+  }
+  wrap.innerHTML=adminScanResults.map((r,i)=>`<div class="item" style="animation-delay:${Math.min(i*12,300)}ms">
+    <div class="item-main">
+      <div class="item-name">${r.nama}</div>
+      <div class="item-meta">
+        <span class="m">${r.nim}</span>
+        <span class="m">${r.matkul}</span>
+        <span class="m">${r.waktu}</span>
+      </div>
+    </div>
+    <div class="item-status h">${r.status}</div>
+  </div>`).join('');
+}
 
 // DEBUG TOOLS - Gunakan di Console Browser
 window.DEBUG={

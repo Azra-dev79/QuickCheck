@@ -1004,21 +1004,20 @@ function onScanSuccess(decoded){
 }
 async function processPresensi(qrData){
   try{
-    let nim='';
-    try{nim=JSON.parse(qrData).nim||''}catch{nim=qrData.trim()}
+    let qrObj={},nim='';
+    try{qrObj=JSON.parse(qrData);nim=qrObj.nim||''}catch{nim=qrData.trim()}
     if(!nim||nim.length<3){toast('error','QR Tidak Valid','Kode tidak dikenali');return}
 
     const s=window.USER_SESSION;
     const matkul=State.matkulAktif;
-    if(!matkul){toast('error','Pilih matkul','Pilih matkul dulu sebelum scan');return}
-
-    const store=JSON.parse(localStorage.getItem('presensiHariIni')||'{}');
     const isKelas=nim==='ABSENSI-KELAS'||qrData.includes('ABSENSI-KELAS');
 
     if(isKelas){
+      // ========== SCAN QR KELAS ==========
+      if(!matkul){toast('error','Pilih matkul','Pilih matkul dulu sebelum scan');return}
       if(!s.nim){toast('error','NIM kosong','Akun belum punya NIM');return}
 
-      // Cek sudah absen matkul ini hari ini?
+      const store=JSON.parse(localStorage.getItem('presensiHariIni')||'{}');
       const existing=store[s.nim];
       let list=[];
       if(Array.isArray(existing))list=existing;
@@ -1038,10 +1037,8 @@ async function processPresensi(qrData){
         nama:s.nama,
         kelas:s.kelas||'',
         jurusan:s.jurusan||'',
-        mataKuliah:matkul.nama,
-        kodeMatkul:matkul.kode||'',
-        sks:matkul.sks||0,
-        dosen:matkul.dosen||'',
+        matakul:matkul.nama,
+        kode:matkul.kode||'',
         status:'Hadir',
         waktu
       })});
@@ -1061,9 +1058,37 @@ async function processPresensi(qrData){
       $('scanHintText').textContent='✓ Presensi OK';
       toast('success','Presensi Berhasil',`${matkul.nama} · kamu tercatat hadir`);
     }else{
-      toast('error','QR tidak valid','Gunakan QR kelas yang dipajang dosen');
+      // ========== SCAN QR PRIBADI (ADMIN / VERIFIKASI) ==========
+      if(qrObj.nim){
+        const waktu=new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'});
+        console.log('📡 Kirim presensi QR pribadi...',{nim:qrObj.nim,nama:qrObj.nama,waktu});
+        
+        // Kirim ke Google Sheets - update berdasarkan NIM
+        await fetch(WEB_APP_URL,{
+          method:'POST',
+          mode:'no-cors',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            action:'presensi',
+            nim:qrObj.nim,
+            nama:qrObj.nama||'',
+            kelas:qrObj.kelas||'',
+            jurusan:qrObj.jurusan||'',
+            matakul:matkul?matkul.nama:'',
+            kode:matkul?matkul.kode||'':'',
+            status:'Hadir',
+            waktu
+          })
+        });
+
+        $('scanHint').classList.add('success');
+        $('scanHintText').textContent='✓ '+qrObj.nama+' - Hadir';
+        toast('success','Presensi OK',`${qrObj.nama} (${qrObj.nim})`);
+      }else{
+        toast('error','QR tidak valid','Format QR tidak dikenali');
+      }
     }
-  }catch(e){toast('error','Gagal',e.message)}
+  }catch(e){toast('error','Gagal',e.message);console.error('Error scan:',e)}
   finally{
     setTimeout(()=>{
       State.isProcessing=false;
