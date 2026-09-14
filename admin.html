@@ -1140,7 +1140,14 @@ function switchTab(name){
   if(name==='mahasiswa'){loadDataMahasiswa();renderKelolaMhs();}
   if(name==='matkul')renderMasterMatkul();
   if(name==='users')renderUsers();
-  if(name==='qr')refreshQRKelas();
+  if(name==='qr'){
+    // Ensure data loaded dari localStorage sebelum buat QR
+    if(!State.mahasiswaData.length){
+      const cached=localStorage.getItem('mahasiswaData');
+      if(cached)try{State.mahasiswaData=JSON.parse(cached);console.log('📦 QR Tab: Load State dari localStorage');}catch{}
+    }
+    refreshQRKelas();
+  }
 }
 
 /* ============================================================
@@ -1406,6 +1413,24 @@ function renderUsers(){
 ============================================================ */
 async function loadDataMahasiswa(){
   const wrap=$('listMhs');
+  
+  // PRIORITY 1: Load dari localStorage DULU (instant)
+  const cached=localStorage.getItem('mahasiswaData');
+  if(cached){
+    try{
+      State.mahasiswaData=JSON.parse(cached);
+      console.log('✅ Load dari localStorage:',State.mahasiswaData.length,'records');
+      if(State.mahasiswaData.length){
+        renderList();
+        if($('tab-mahasiswa').classList.contains('on'))renderKelolaMhs();
+        updateInfo();
+        // Langsung return, jangan tunggu Google Sheets
+        // Tapi tetap try update dari Google Sheets di background
+      }
+    }catch(e){console.error('Error parse localStorage:',e)}
+  }
+  
+  // PRIORITY 2: Update dari Google Sheets (background sync)
   if(wrap&&State.mahasiswaData.length===0)wrap.innerHTML=`<div class="empty"><i class="fas fa-spinner fa-spin"></i>MEMUAT DATA<small>Mohon tunggu</small></div>`;
   try{
     const online=await checkConnection();
@@ -1420,7 +1445,7 @@ async function loadDataMahasiswa(){
     if(Array.isArray(data)&&data.length){
       State.mahasiswaData=data;
       localStorage.setItem('mahasiswaData',JSON.stringify(data));
-      console.log('✅ Data disimpan ke localStorage. Total:',data.length,'records');
+      console.log('✅ Data dari Google Sheets disimpan ke localStorage. Total:',data.length,'records');
       console.log('   NIM yang tersimpan:',data.map(m=>m.nim));
       renderList();
       if($('tab-mahasiswa').classList.contains('on'))renderKelolaMhs();
@@ -1430,10 +1455,10 @@ async function loadDataMahasiswa(){
     throw new Error('Data kosong atau format invalid');
   }catch(err){
     console.error('❌ Error fetch Google Sheets:',err.message);
-    const c=localStorage.getItem('mahasiswaData');
-    console.log('📦 Fallback ke localStorage...');
-    if(c){try{const p=JSON.parse(c);if(p?.length){console.log('✅ Gunakan localStorage:',p.length,'records');State.mahasiswaData=p;renderList();updateInfo();return}}catch{console.error('Error parse localStorage')}}
-    if(wrap)wrap.innerHTML=`<div class="empty"><i class="fas fa-triangle-exclamation"></i>GAGAL MEMUAT<small>${err.message}</small></div>`;
+    // Jika Google Sheets error tapi localStorage ada, tetap OK
+    if(State.mahasiswaData.length===0){
+      if(wrap)wrap.innerHTML=`<div class="empty"><i class="fas fa-triangle-exclamation"></i>GAGAL MEMUAT<small>Google Sheets: ${err.message}</small></div>`;
+    }
   }
 }
 function updateInfo(){
@@ -1471,17 +1496,31 @@ async function saveMahasiswa(){
   if(!jurusan){toast('warning','Jurusan kosong','Isi jurusan mahasiswa');return}
   const isEdit=State.editingNim!==null;
   if(!isEdit&&State.mahasiswaData.find(m=>m.nim===nim)){toast('error','NIM sudah ada','Gunakan NIM lain');return}
+  
+  // PENTING: Simpan ke State dan localStorage LANGSUNG (sebelum fetch Google Sheets)
+  if(isEdit){const i=State.mahasiswaData.findIndex(m=>m.nim===State.editingNim);if(i>=0)State.mahasiswaData[i]={nim,nama,kelas,jurusan}}
+  else State.mahasiswaData.push({nim,nama,kelas,jurusan});
+  
+  // LANGSUNG SAVE KE LOCALSTORAGE - INI YANG PENTING!
+  localStorage.setItem('mahasiswaData',JSON.stringify(State.mahasiswaData));
+  console.log('✅ SAVED ke localStorage. Total:',State.mahasiswaData.length,'NIM:',nim);
+  
+  // LANGSUNG UPDATE UI - jangan tunggu Google Sheets
+  renderKelolaMhs();renderList();updateInfo();
+  toast('success',isEdit?'Data disimpan':'Data ditambahkan','✓ Sudah bisa dibuat QR');
+  
+  // Auto-populate NIM ke QR generator untuk kemudahan
+  $('qrNimInput').value=nim;
+  console.log('✅ QR NIM input auto-populated:',nim);
+  
+  resetMhsForm();
+  
+  // Async: Kirim ke Google Sheets (fire and forget)
   try{
-    toast('info','Menyimpan...','Mengirim ke Google Sheets');
+    console.log('📡 Kirim ke Google Sheets...');
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:isEdit?'update_mahasiswa':'add_mahasiswa',nim,nama,kelas,jurusan,oldNim:State.editingNim||nim})});
-    if(isEdit){const i=State.mahasiswaData.findIndex(m=>m.nim===State.editingNim);if(i>=0)State.mahasiswaData[i]={nim,nama,kelas,jurusan}}
-    else State.mahasiswaData.push({nim,nama,kelas,jurusan});
-    localStorage.setItem('mahasiswaData',JSON.stringify(State.mahasiswaData));
-    console.log('✓ Mahasiswa disimpan ke localStorage. Total:',State.mahasiswaData.length);
-    console.log('  Data:',{nim,nama,kelas,jurusan});
-    renderKelolaMhs();renderList();updateInfo();resetMhsForm();
-    toast('success',isEdit?'Data diperbarui':'Data ditambahkan',nama);
-  }catch(e){toast('error','Gagal',e.message)}
+    console.log('✓ Google Sheets sync OK');
+  }catch(e){console.warn('⚠ Google Sheets error (data lokal sudah aman):',e.message);}
 }
 function editMahasiswa(nim){
   const m=State.mahasiswaData.find(x=>x.nim===nim);if(!m)return;
@@ -1538,11 +1577,25 @@ function downloadQR(){
 function generateQRCode(){
   const nim=$('qrNimInput').value.trim();
   if(!nim){toast('warning','NIM kosong','Masukkan NIM');return}
+  
+  // PENTING: Ensure State loaded dari localStorage (untuk handle after refresh)
+  if(!State.mahasiswaData.length){
+    const cached=localStorage.getItem('mahasiswaData');
+    if(cached)try{State.mahasiswaData=JSON.parse(cached);console.log('📦 Reload State dari localStorage');}catch{}
+  }
+  
   const m=State.mahasiswaData.find(x=>x.nim===nim);
-  if(!m){toast('error','Tidak ditemukan',`NIM ${nim} tidak terdaftar`);return}
+  if(!m){
+    console.log('❌ NIM tidak ditemukan:',nim);
+    console.log('📋 Daftar NIM yang tersedia:',State.mahasiswaData.map(x=>(`${x.nim} - ${x.nama}`)));
+    toast('error','Tidak ditemukan',`NIM ${nim} tidak terdaftar (total: ${State.mahasiswaData.length} data)`);
+    return
+  }
+  
   const d={nim:m.nim,nama:m.nama,kelas:m.kelas,jurusan:m.jurusan,link_sheet:SHEET_URL,timestamp:new Date().toISOString()};
+  console.log('✅ QR created untuk:',d);
   $('qrResultImage').src=`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(JSON.stringify(d))}`;
-  $('qrInfo').innerHTML=`<strong>${m.nama}</strong>${m.nim} · ${m.kelas} · ${m.jurusan}`;
+  $('qrInfo').innerHTML=`<strong>${m.nama}</strong><br>${m.nim} · ${m.kelas} · ${m.jurusan}`;
   $('qrPreview').classList.add('on');
   toast('success','QR dibuat',m.nama);
 }
