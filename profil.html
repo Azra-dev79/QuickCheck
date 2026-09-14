@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Profil Saya — Presensi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+:root{
+  --rust:#d2691e;--rust-dk:#a8501a;--rust-lt:#e8864a;
+  --teal:#1a4d4d;--teal-dk:#0f3333;--teal-lt:#2d6b6b;
+  --mustard:#d4a017;--mustard-dk:#a87f10;
+  --cream:#f0ead6;--cream-dk:#e5dcc0;--cream-lt:#f8f4e8;
+  --ink:#1a1a1a;--ink-soft:#2d2d2d;--ink-mute:#4a4a4a;
+  --brick:#b8412d;--moss:#5a6b3f;
+  --text:#1a1a1a;--text-2:#4a4a4a;--text-3:#8a8270;--text-4:#c0b8a0;
+  --shadow-hard:6px 6px 0 var(--ink);
+  --shadow-hard-sm:4px 4px 0 var(--ink);
+  --shadow-hard-lg:8px 8px 0 var(--ink);
+  --border:2.5px solid var(--ink);
+  --border-thin:2px solid var(--ink);
+}
+[data-theme="dark"]{
+  --cream:#1a1a1a;--cream-dk:#242424;--cream-lt:#1f1f1f;
+  --ink:#f0ead6;--ink-soft:#e5dcc0;--ink-mute:#a09888;
+  --text:#f0ead6;--text-2:#a09888;--text-3:#807868;--text-4:#4a4438;
+  --shadow-hard:6px 6px 0 #000;
+  --shadow-hard-sm:4px 4px 0 #000;
+  --shadow-hard-lg:8px 8px 0 #000;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Space Grotesk',-apple-system,sans-serif;
+  background:var(--cream);color:var(--text);
+  min-height:100vh;font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:repeating-linear-gradient(45deg,transparent 0,transparent 40px,rgba(26,26,26,.025) 40px,rgba(26,26,26,.025) 41px);
+}
+[data-theme="dark"] body::before{background-image:repeating-linear-gradient(45deg,transparent 0,transparent 40px,rgba(240,234,214,.03) 40px,rgba(240,234,214,.03) 41px)}
+
+.strip{
+  position:relative;z-index:2;padding:12px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  background:var(--ink);color:var(--cream);
+  font-family:'DM Mono',monospace;font-size:11px;
+  letter-spacing:.08em;text-transform:uppercase;flex-wrap:wrap;
+}
+.strip .left,.strip .right{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.strip .dot{width:6px;height:6px;border-radius:50%;background:var(--mustard);animation:pulse 1.4s infinite;display:inline-block;margin-right:6px}
+@keyframes pulse{50%{opacity:.35}}
+@media(max-width:560px){.strip{padding:11px 16px;font-size:10px}.strip .left,.strip .right{gap:12px}}
+
+.wrap{
+  position:relative;z-index:1;
+  max-width:1180px;margin:0 auto;
+  padding:32px 40px 70px;
+}
+@media(max-width:760px){.wrap{padding:24px 20px 60px}}
+@media(max-width:560px){.wrap{padding:20px 14px 50px}}
+
+.page-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;margin-bottom:26px;flex-wrap:wrap;
+}
+.page-head .left .kicker{
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:var(--rust);letter-spacing:.16em;text-transform:uppercase;
+  font-weight:500;margin-bottom:8px;
+}
+.page-head .left .kicker::before{content:'▸ '}
+.page-head h1{
+  font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,44px);
+  font-weight:800;letter-spacing:-.04em;line-height:1;
+  color:var(--ink);
+}
+.page-head .left .sub{
+  font-size:14px;color:var(--text-2);margin-top:8px;
+}
+.page-head .right{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  padding:13px 20px;
+  font-family:'Syne',sans-serif;font-size:12.5px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;border:var(--border-thin);
+  background:var(--cream-lt);color:var(--ink);
+  transition:all .15s;white-space:nowrap;text-decoration:none;
+  box-shadow:3px 3px 0 var(--ink);
+}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn.pri{background:var(--ink);color:var(--mustard);box-shadow:3px 3px 0 var(--rust)}
+.btn.pri:hover{box-shadow:5px 5px 0 var(--rust)}
+.btn.teal{background:var(--teal);color:var(--cream);box-shadow:3px 3px 0 var(--mustard)}
+.btn.teal:hover{box-shadow:5px 5px 0 var(--mustard)}
+.btn.dgr{background:var(--brick);color:var(--cream);box-shadow:3px 3px 0 var(--ink)}
+.btn.dgr:hover{box-shadow:5px 5px 0 var(--ink)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--cream-dk)}
+.btn.sm{padding:9px 14px;font-size:11px;box-shadow:2px 2px 0 var(--ink)}
+.btn.sm:hover{box-shadow:4px 4px 0 var(--ink)}
+
+.avatar-hero{
+  display:flex;align-items:center;gap:22px;
+  padding:28px 30px;
+  background:var(--ink);color:var(--cream);
+  border:var(--border-thin);position:relative;overflow:hidden;
+  box-shadow:var(--shadow-hard);
+  margin-bottom:24px;
+}
+.avatar-hero::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(212,160,23,.22),transparent 65%);
+  pointer-events:none;
+}
+.avatar-hero .av-big{
+  width:88px;height:88px;flex-shrink:0;
+  background:var(--mustard);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:34px;font-weight:800;
+  border:3px solid var(--mustard);
+  box-shadow:6px 6px 0 var(--rust);
+  position:relative;z-index:1;
+}
+.avatar-hero .info{flex:1;min-width:0;position:relative;z-index:1}
+.avatar-hero .name{
+  font-family:'Syne',sans-serif;font-size:26px;font-weight:800;
+  letter-spacing:-.025em;line-height:1.1;color:var(--cream);
+  margin-bottom:6px;
+}
+.avatar-hero .meta{
+  font-family:'DM Mono',monospace;font-size:12px;
+  color:var(--cream);opacity:.75;letter-spacing:.04em;
+  line-height:1.7;
+}
+.avatar-hero .meta strong{color:var(--mustard);opacity:1;font-weight:600}
+@media(max-width:560px){
+  .avatar-hero{flex-direction:column;text-align:center;padding:20px}
+  .avatar-hero .av-big{width:72px;height:72px;font-size:28px}
+  .avatar-hero .name{font-size:20px}
+}
+
+.stats-mini{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+  border:var(--border-thin);background:var(--cream-lt);
+  box-shadow:var(--shadow-hard-sm);
+  margin-bottom:24px;
+}
+.stat-mini{
+  padding:20px 22px;border-right:var(--border-thin);
+  display:flex;flex-direction:column;gap:6px;
+}
+.stat-mini:last-child{border-right:none}
+.stat-mini .l{
+  font-family:'DM Mono',monospace;font-size:10px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);
+}
+.stat-mini .v{
+  font-family:'Syne',sans-serif;font-size:32px;font-weight:800;
+  letter-spacing:-.03em;color:var(--ink);line-height:1;
+}
+.stat-mini:nth-child(1) .v{color:var(--rust)}
+.stat-mini:nth-child(2) .v{color:var(--moss)}
+.stat-mini:nth-child(3) .v{color:var(--teal)}
+@media(max-width:560px){.stat-mini{padding:14px}.stat-mini .v{font-size:22px}}
+
+.nav{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+  margin-bottom:26px;border:var(--border-thin);
+  background:var(--cream-lt);box-shadow:var(--shadow-hard-sm);
+}
+@media(max-width:560px){
+  .nav{grid-template-columns:1fr 1fr}
+  .nav-btn:last-child{grid-column:1/-1;border-top:var(--border-thin);border-right:none}
+}
+.nav-btn{
+  padding:16px 14px;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  background:transparent;color:var(--text-3);
+  border:none;border-right:var(--border-thin);
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.nav-btn:last-child{border-right:none}
+.nav-btn:hover{color:var(--ink);background:var(--cream-dk)}
+.nav-btn.on{background:var(--ink);color:var(--mustard)}
+
+.tab{display:none}
+.tab.on{display:block;animation:fadeUp .35s cubic-bezier(.4,0,.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card{
+  background:var(--cream-lt);border:var(--border-thin);
+  box-shadow:var(--shadow-hard);margin-bottom:22px;
+}
+.card-pad{padding:28px 30px}
+@media(max-width:560px){.card-pad{padding:20px 18px}}
+
+.card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;padding:18px 24px;
+  border-bottom:var(--border-thin);
+  background:var(--cream);
+  flex-wrap:wrap;
+}
+.card-head-left{display:flex;align-items:center;gap:14px;min-width:0}
+.card-icon{
+  width:42px;height:42px;flex-shrink:0;
+  background:var(--ink);color:var(--mustard);
+  display:flex;align-items:center;justify-content:center;font-size:17px;
+}
+.card-title{
+  font-family:'Syne',sans-serif;font-size:17px;font-weight:700;
+  letter-spacing:-.015em;color:var(--ink);line-height:1.15;
+  text-transform:uppercase;
+}
+.card-desc{
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:var(--text-3);margin-top:3px;letter-spacing:.02em;
+}
+.card-badge{
+  font-family:'DM Mono',monospace;font-size:10px;font-weight:500;
+  padding:5px 12px;background:var(--mustard);color:var(--ink);
+  border:2px solid var(--ink);letter-spacing:.1em;
+  text-transform:uppercase;flex-shrink:0;
+}
+.card-badge.teal{background:var(--teal);color:var(--cream)}
+.card-badge.rust{background:var(--rust);color:var(--cream)}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr}}
+.field{margin-bottom:16px}
+.field label{
+  display:flex;align-items:center;gap:8px;
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink);
+  margin-bottom:8px;
+}
+.field label::before{content:'>';color:var(--rust);font-weight:700}
+.field .wrap-in{position:relative}
+.field input,
+.field select{
+  width:100%;padding:14px 44px 14px 16px;
+  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:500;
+  background:var(--cream);color:var(--ink);
+  border:var(--border-thin);transition:all .15s;
+}
+.field input::placeholder{color:var(--text-4);font-weight:400}
+.field input:focus,
+.field select:focus{
+  outline:none;background:#fff;
+  box-shadow:inset 3px 3px 0 var(--mustard);
+}
+[data-theme="dark"] .field input:focus,
+[data-theme="dark"] .field select:focus{background:var(--cream-dk)}
+.field input[readonly]{
+  background:var(--cream-dk);color:var(--text-2);
+  cursor:not-allowed;
+}
+.field select{
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  cursor:pointer;padding-right:44px;
+}
+.field select option{
+  background:var(--cream-lt);color:var(--ink);
+  font-family:'Space Grotesk',sans-serif;font-size:15px;
+}
+.field select:invalid,
+.field select option[value=""]{color:var(--text-4)}
+.field .caret{
+  position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  pointer-events:none;color:var(--ink);font-size:12px;
+  transition:transform .2s ease;
+}
+.field select:focus ~ .caret{transform:translateY(-50%) rotate(180deg)}
+.field .eye{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:var(--ink);color:var(--cream);border:none;
+  width:30px;height:30px;cursor:pointer;font-size:11px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.field .eye:hover{background:var(--rust)}
+
+/* ==========================================
+   MATKUL PICKER (NEW)
+========================================== */
+.matkul-picker{
+  display:grid;grid-template-columns:1fr auto;gap:10px;
+  margin-bottom:16px;
+}
+@media(max-width:560px){.matkul-picker{grid-template-columns:1fr}}
+.matkul-picker select{
+  width:100%;padding:14px 44px 14px 16px;
+  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:500;
+  background:var(--cream);color:var(--ink);
+  border:var(--border-thin);transition:all .15s;
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  cursor:pointer;padding-right:44px;
+}
+.matkul-picker select:focus{outline:none;background:#fff;box-shadow:inset 3px 3px 0 var(--mustard)}
+.matkul-picker select:invalid{color:var(--text-4)}
+.matkul-picker select option{background:var(--cream-lt);color:var(--ink);font-size:15px}
+.matkul-picker-wrap{position:relative;grid-column:1}
+.matkul-picker-wrap .caret{
+  position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  pointer-events:none;color:var(--ink);font-size:12px;
+}
+
+.help-text{
+  font-family:'DM Mono',monospace;font-size:10.5px;
+  color:var(--text-3);margin-top:6px;letter-spacing:.02em;
+  display:flex;align-items:center;gap:6px;
+}
+.help-text i{color:var(--rust);font-size:10px}
+
+.matkul-list{display:flex;flex-direction:column}
+.matkul-item{
+  display:grid;grid-template-columns:auto 1fr auto;
+  gap:16px;align-items:center;
+  padding:18px 24px;
+  border-bottom:var(--border-thin);
+  background:var(--cream-lt);
+  position:relative;
+  transition:all .15s;
+  animation:slideIn .3s ease both;
+}
+.matkul-item:last-child{border-bottom:none}
+.matkul-item:hover{background:var(--cream)}
+.matkul-item::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:6px;
+  background:var(--rust);
+}
+.matkul-item:nth-child(3n+2)::before{background:var(--teal)}
+.matkul-item:nth-child(3n+3)::before{background:var(--mustard)}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+@media(max-width:560px){.matkul-item{grid-template-columns:auto 1fr;gap:12px;padding:14px 18px 14px 22px}}
+
+.matkul-ic{
+  width:52px;height:52px;flex-shrink:0;
+  background:var(--ink);color:var(--mustard);
+  border:2px solid var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:15px;font-weight:800;
+  letter-spacing:-.02em;
+}
+.matkul-info{min-width:0}
+.matkul-nama{
+  font-family:'Syne',sans-serif;font-size:16px;font-weight:800;
+  letter-spacing:-.015em;color:var(--ink);line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.matkul-meta{
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:var(--text-3);margin-top:5px;
+  display:flex;gap:12px;flex-wrap:wrap;
+}
+.matkul-meta .m{display:flex;align-items:center;gap:5px}
+.matkul-meta .m strong{color:var(--ink);font-weight:600}
+.matkul-acts{display:flex;gap:6px;flex-shrink:0}
+.matkul-acts button{
+  width:36px;height:36px;
+  background:var(--cream);border:var(--border-thin);
+  color:var(--ink);cursor:pointer;font-size:12px;
+  transition:all .15s;display:flex;align-items:center;justify-content:center;
+  box-shadow:2px 2px 0 var(--ink);
+}
+.matkul-acts button:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink);background:var(--mustard)}
+.matkul-acts button.dgr:hover{background:var(--brick);color:var(--cream)}
+
+.empty{
+  text-align:center;padding:50px 24px;
+  font-family:'Syne',sans-serif;font-size:18px;
+  letter-spacing:-.01em;color:var(--text-3);line-height:1.3;
+}
+.empty i{font-size:44px;display:block;margin-bottom:16px;color:var(--text-4);opacity:.6}
+.empty small{
+  display:block;margin-top:12px;
+  font-family:'DM Mono',monospace;font-size:11.5px;
+  color:var(--text-4);letter-spacing:.04em;
+}
+
+.err{
+  display:none;padding:13px 16px;
+  background:var(--brick);color:var(--cream);
+  border:var(--border-thin);
+  font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;
+  letter-spacing:.03em;margin-bottom:16px;align-items:center;gap:9px;
+}
+.err.on{display:flex;animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.success-msg{
+  display:none;padding:13px 16px;
+  background:var(--moss);color:var(--cream);
+  border:var(--border-thin);
+  font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;
+  letter-spacing:.03em;margin-bottom:16px;align-items:center;gap:9px;
+}
+.success-msg.on{display:flex;animation:fadeUp .3s}
+
+.action-row{display:flex;gap:10px;flex-wrap:wrap}
+
+.user-chip{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 14px 6px 6px;
+  background:var(--cream-lt);border:var(--border-thin);
+  cursor:pointer;transition:all .15s;position:relative;
+  box-shadow:3px 3px 0 var(--ink);
+}
+.user-chip:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+.user-chip .av{
+  width:36px;height:36px;
+  background:var(--ink);color:var(--mustard);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:800;
+}
+.user-chip .info{display:flex;flex-direction:column;line-height:1.15}
+.user-chip .nm{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--ink)}
+.user-chip .rl{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--text-3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;font-weight:500}
+.user-chip > i{font-size:10px;color:var(--text-3);margin-left:4px}
+@media(max-width:560px){.user-chip .info{display:none}.user-chip{padding:5px 6px 5px 5px}}
+
+.user-drop{
+  position:absolute;top:calc(100% + 12px);right:0;min-width:220px;
+  background:var(--cream-lt);border:var(--border-thin);
+  box-shadow:var(--shadow-hard);padding:6px;z-index:200;display:none;
+}
+.user-drop.show{display:block;animation:dropIn .2s cubic-bezier(.34,1.56,.64,1)}
+@keyframes dropIn{from{opacity:0;transform:translateY(-8px) rotate(-2deg)}to{opacity:1;transform:translateY(0) rotate(0)}}
+.user-drop button{
+  width:100%;padding:11px 12px;background:transparent;border:none;
+  color:var(--ink);font-family:'Space Grotesk',sans-serif;
+  font-size:13px;font-weight:600;text-align:left;cursor:pointer;
+  display:flex;align-items:center;gap:10px;transition:all .15s;
+}
+.user-drop button:hover{background:var(--mustard)}
+.user-drop .div{height:2px;background:var(--ink);margin:6px 0;opacity:.15}
+.user-drop .danger{color:var(--brick)}
+.user-drop .danger:hover{background:var(--brick);color:var(--cream)}
+
+.toast-wrap{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  display:flex;flex-direction:column-reverse;gap:12px;
+  max-width:380px;pointer-events:none;
+}
+.toast{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:14px 16px;background:var(--cream-lt);
+  border:var(--border-thin);box-shadow:var(--shadow-hard-sm);
+  pointer-events:auto;animation:toastIn .35s cubic-bezier(.34,1.56,.64,1);
+}
+.toast.out{animation:toastOut .25s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(60px) rotate(3deg)}to{opacity:1;transform:translateX(0) rotate(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(60px)}}
+.toast-icon{width:38px;height:38px;flex-shrink:0;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-size:15px}
+.toast.success .toast-icon{background:var(--moss);color:var(--cream)}
+.toast.error .toast-icon{background:var(--brick);color:var(--cream)}
+.toast.warning .toast-icon{background:var(--mustard);color:var(--ink)}
+.toast.info .toast-icon{background:var(--teal);color:var(--cream)}
+.toast-body{flex:1;min-width:0}
+.toast-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--ink);text-transform:uppercase;line-height:1.2}
+.toast-msg{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text-2);margin-top:4px;line-height:1.5}
+
+.theme-fab{
+  position:fixed;top:20px;right:20px;z-index:100;
+  width:46px;height:46px;
+  background:var(--mustard);color:var(--ink);
+  border:var(--border-thin);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:3px 3px 0 var(--ink);transition:all .15s;
+}
+.theme-fab:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+
+@media(max-width:560px){
+  .theme-fab{top:14px;right:14px;width:40px;height:40px}
+  .toast-wrap{left:14px;right:14px;bottom:14px;max-width:none}
+}
+</style>
+</head>
+<body>
+
+<div class="strip">
+  <div class="left">
+    <span><span class="dot"></span>PROFIL · MAHASISWA</span>
+    <span>EDIT MODE</span>
+  </div>
+  <div class="right">
+    <span id="clockDisplay">--:--:--</span>
+    <span>v2.0.1</span>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<button class="theme-fab" id="themeBtn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <div class="left">
+      <div class="kicker">// Profil Mahasiswa</div>
+      <h1>PROFIL SAYA.</h1>
+      <div class="sub">Kelola biodata dan mata kuliah kamu</div>
+    </div>
+    <div class="right">
+      <a class="btn ghost sm" href="absensi.html">
+        <i class="fas fa-arrow-left"></i> Kembali
+      </a>
+      <div class="user-chip" id="userMenu" onclick="toggleUserMenu(event)">
+        <div class="av" id="userAvatar">?</div>
+        <div class="info">
+          <div class="nm" id="userName">User</div>
+          <div class="rl">Mahasiswa</div>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+        <div class="user-drop" id="userDropdown">
+          <button onclick="showAccountInfo()"><i class="fas fa-circle-info"></i> Info Akun</button>
+          <div class="div"></div>
+          <button class="danger" onclick="doLogout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avatar-hero">
+    <div class="av-big" id="heroAvatar">?</div>
+    <div class="info">
+      <div class="name" id="heroName">Mahasiswa</div>
+      <div class="meta" id="heroMeta">NIM · Kelas · Jurusan</div>
+    </div>
+  </div>
+
+  <div class="stats-mini">
+    <div class="stat-mini">
+      <span class="l">Mata Kuliah</span>
+      <span class="v" id="statMatkul">0</span>
+    </div>
+    <div class="stat-mini">
+      <span class="l">Hadir Hari Ini</span>
+      <span class="v" id="statHadir">—</span>
+    </div>
+    <div class="stat-mini">
+      <span class="l">Status Akun</span>
+      <span class="v" id="statStatus" style="font-size:18px">AKTIF</span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn on" data-tab="biodata" onclick="switchTab('biodata')">
+      <i class="fas fa-id-card"></i> Biodata
+    </button>
+    <button class="nav-btn" data-tab="matkul" onclick="switchTab('matkul')">
+      <i class="fas fa-book"></i> Mata Kuliah
+    </button>
+    <button class="nav-btn" data-tab="password" onclick="switchTab('password')">
+      <i class="fas fa-lock"></i> Password
+    </button>
+  </nav>
+
+  <!-- TAB: BIODATA -->
+  <section class="tab on" id="tab-biodata">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="card-icon"><i class="fas fa-id-card"></i></div>
+          <div>
+            <div class="card-title">Biodata Mahasiswa</div>
+            <div class="card-desc">// Edit data pribadi kamu</div>
+          </div>
+        </div>
+        <span class="card-badge">EDIT</span>
+      </div>
+      <div class="card-pad">
+        <div class="err" id="bioError"><i class="fas fa-triangle-exclamation"></i><span id="bioErrorText"></span></div>
+        <div class="success-msg" id="bioSuccess"><i class="fas fa-check-circle"></i><span id="bioSuccessText"></span></div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Nama Lengkap</label>
+            <div class="wrap-in"><input type="text" id="bioNama" placeholder="Nama lengkap"></div>
+          </div>
+          <div class="field">
+            <label>NIM</label>
+            <div class="wrap-in"><input type="text" id="bioNim" readonly title="NIM tidak dapat diubah"></div>
+          </div>
+          <div class="field">
+            <label>Kelas</label>
+            <div class="wrap-in"><input type="text" id="bioKelas" placeholder="cth: 2A" maxlength="10"></div>
+          </div>
+          <div class="field">
+            <label>Jurusan</label>
+            <div class="wrap-in">
+              <select id="bioJurusan">
+                <option value="">— Pilih Jurusan —</option>
+                <option value="Teknik Informatika">Teknik Informatika</option>
+                <option value="Teknik Sipil">Teknik Sipil</option>
+                <option value="Teknik Mesin">Teknik Mesin</option>
+                <option value="Teknik Elektro">Teknik Elektro</option>
+                <option value="Teknik Industri">Teknik Industri</option>
+              </select>
+              <i class="fas fa-chevron-down caret"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Email (opsional)</label>
+            <div class="wrap-in"><input type="email" id="bioEmail" placeholder="cth: budi@email.com"></div>
+          </div>
+          <div class="field">
+            <label>No. HP (opsional)</label>
+            <div class="wrap-in"><input type="tel" id="bioHp" placeholder="cth: 08123456789" maxlength="15"></div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn pri" onclick="saveBiodata()">
+            <i class="fas fa-save"></i> Simpan Biodata
+          </button>
+          <button class="btn ghost" onclick="resetBiodata()">
+            <i class="fas fa-rotate-left"></i> Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: MATKUL -->
+  <section class="tab" id="tab-matkul">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="card-icon"><i class="fas fa-book"></i></div>
+          <div>
+            <div class="card-title">Ambil Mata Kuliah</div>
+            <div class="card-desc">// Pilih dari daftar yang tersedia</div>
+          </div>
+        </div>
+        <span class="card-badge teal">PILIH</span>
+      </div>
+      <div class="card-pad">
+        <div class="err" id="pickError"><i class="fas fa-triangle-exclamation"></i><span id="pickErrorText"></span></div>
+
+        <div class="matkul-picker">
+          <div class="matkul-picker-wrap">
+            <select id="matkulSelect">
+              <option value="">— Pilih Mata Kuliah —</option>
+            </select>
+            <i class="fas fa-chevron-down caret"></i>
+          </div>
+          <button class="btn pri" onclick="ambilMatkul()">
+            <i class="fas fa-plus"></i> Ambil
+          </button>
+        </div>
+        <div class="help-text">
+          <i class="fas fa-circle-info"></i>
+          <span>Daftar matkul diatur oleh admin. Pilih yang sesuai dengan kelas kamu.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="card-icon"><i class="fas fa-list-check"></i></div>
+          <div>
+            <div class="card-title">Matkul Saya</div>
+            <div class="card-desc" id="matkulDesc">// 0 mata kuliah diambil</div>
+          </div>
+        </div>
+        <span class="card-badge rust" id="matkulCount">0</span>
+      </div>
+      <div class="matkul-list" id="matkulList">
+        <div class="empty">
+          <i class="fas fa-book-open"></i>
+          Belum ada mata kuliah
+          <small>Pilih dari dropdown di atas untuk menambahkan</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: PASSWORD -->
+  <section class="tab" id="tab-password">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="card-icon"><i class="fas fa-lock"></i></div>
+          <div>
+            <div class="card-title">Ganti Password</div>
+            <div class="card-desc">// Ubah password akun kamu</div>
+          </div>
+        </div>
+        <span class="card-badge rust">SECURE</span>
+      </div>
+      <div class="card-pad">
+        <div class="err" id="pwError"><i class="fas fa-triangle-exclamation"></i><span id="pwErrorText"></span></div>
+        <div class="success-msg" id="pwSuccess"><i class="fas fa-check-circle"></i><span id="pwSuccessText"></span></div>
+
+        <div class="field">
+          <label>Password Lama</label>
+          <div class="wrap-in">
+            <input type="password" id="pwOld" placeholder="••••••••">
+            <button class="eye" onclick="togglePass('pwOld',this)"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Password Baru</label>
+          <div class="wrap-in">
+            <input type="password" id="pwNew" placeholder="min. 6 karakter">
+            <button class="eye" onclick="togglePass('pwNew',this)"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Konfirmasi Password Baru</label>
+          <div class="wrap-in">
+            <input type="password" id="pwConfirm" placeholder="ulangi password baru">
+            <button class="eye" onclick="togglePass('pwConfirm',this)"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn dgr" onclick="changePassword()">
+            <i class="fas fa-key"></i> Ganti Password
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   PROTEKSI LOGIN USER
+============================================================ */
+(function(){
+  const s=JSON.parse(localStorage.getItem('presensiSession')||'null');
+  if(!s){window.location.href='login.html';return}
+  if(s.role==='admin'){window.location.href='admin.html';return}
+  window.USER_SESSION=s;
+})();
+
+const USERS_KEY='presensiUsers';
+const MATKUL_KEY='presensiMatkul';
+const MASTER_MATKUL_KEY='presensiMatkulMaster';
+const SESSION_KEY='presensiSession';
+const $=id=>document.getElementById(id);
+
+/* ============================================================
+   UTILITY
+============================================================ */
+function getCurrentUser(){
+  const s=window.USER_SESSION;
+  const users=JSON.parse(localStorage.getItem(USERS_KEY)||'{}');
+  return users[s.username]||null;
+}
+function getMasterMatkul(){
+  return JSON.parse(localStorage.getItem(MASTER_MATKUL_KEY)||'[]');
+}
+function getMatkulSaya(){
+  const s=window.USER_SESSION;
+  const all=JSON.parse(localStorage.getItem(MATKUL_KEY)||'{}');
+  return all[s.nim]||[];
+}
+function saveMatkulSaya(list){
+  const s=window.USER_SESSION;
+  const all=JSON.parse(localStorage.getItem(MATKUL_KEY)||'{}');
+  all[s.nim]=list;
+  localStorage.setItem(MATKUL_KEY,JSON.stringify(all));
+}
+function isHadirToday(nim){
+  const d=JSON.parse(localStorage.getItem('presensiHariIni')||'{}');
+  return d[nim]===new Date().toLocaleDateString('id-ID');
+}
+function toast(type,title,msg,dur=3200){
+  const ic={success:'fa-check',error:'fa-xmark',warning:'fa-triangle-exclamation',info:'fa-info'}[type];
+  const el=document.createElement('div');
+  el.className='toast '+type;
+  el.innerHTML=`<div class="toast-icon"><i class="fas ${ic}"></i></div><div class="toast-body"><div class="toast-title">${title}</div>${msg?`<div class="toast-msg">${msg}</div>`:''}</div>`;
+  $('toastWrap').appendChild(el);
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),240)},dur);
+}
+function initials(n){
+  if(!n)return'?';
+  const p=n.trim().split(/\s+/);
+  return ((p[0]?.[0]||'')+(p[1]?.[0]||'')).toUpperCase()||'?';
+}
+function togglePass(id,btn){
+  const i=$(id),ic=btn.querySelector('i');
+  if(i.type==='password'){i.type='text';ic.className='fas fa-eye-slash'}
+  else{i.type='password';ic.className='fas fa-eye'}
+}
+function showErr(id,txt){
+  const el=$(id);$(id+'Text').textContent=txt;
+  el.classList.add('on');el.style.animation='none';setTimeout(()=>el.style.animation='',10);
+}
+function hideErr(id){$(id)?.classList.remove('on')}
+function showSuccess(id,txt,dur=3000){
+  const el=$(id);$(id+'Text').textContent=txt;
+  el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'),dur);
+}
+
+/* ============================================================
+   USER MENU
+============================================================ */
+function initUser(){
+  const s=window.USER_SESSION;if(!s)return;
+  const user=getCurrentUser();
+  const nama=(user&&user.nama)||s.nama||s.username;
+  const ini=initials(nama);
+
+  $('userAvatar').textContent=ini;
+  $('userName').textContent=nama.split(' ')[0];
+  $('heroAvatar').textContent=ini;
+  $('heroName').textContent=nama;
+
+  const parts=[];
+  if(user?.nim)parts.push(`NIM <strong>${user.nim}</strong>`);
+  if(user?.kelas)parts.push(`Kelas <strong>${user.kelas}</strong>`);
+  if(user?.jurusan)parts.push(`<strong>${user.jurusan}</strong>`);
+  $('heroMeta').innerHTML=parts.length?parts.join(' · '):'Lengkapi biodata kamu';
+
+  document.addEventListener('click',e=>{
+    const d=$('userDropdown'),m=$('userMenu');
+    if(d&&m&&!m.contains(e.target))d.classList.remove('show');
+  });
+}
+function toggleUserMenu(e){e.stopPropagation();$('userDropdown')?.classList.toggle('show')}
+function doLogout(){
+  if(!confirm('Yakin mau logout?'))return;
+  localStorage.removeItem(SESSION_KEY);
+  toast('info','Logout','Sampai jumpa!');
+  setTimeout(()=>window.location.href='login.html',600);
+}
+function showAccountInfo(){
+  const u=getCurrentUser();
+  $('userDropdown')?.classList.remove('show');
+  toast('info',`Halo, ${u.nama}!`,`NIM: ${u.nim} · Kelas: ${u.kelas}`,5000);
+}
+
+/* ============================================================
+   TABS
+============================================================ */
+function switchTab(name){
+  document.querySelectorAll('.nav-btn').forEach(t=>t.classList.toggle('on',t.dataset.tab===name));
+  document.querySelectorAll('.tab').forEach(c=>c.classList.toggle('on',c.id==='tab-'+name));
+  if(name==='matkul'){renderMatkulPicker();renderMatkulSaya();}
+}
+
+/* ============================================================
+   BIODATA
+============================================================ */
+function loadBiodata(){
+  const u=getCurrentUser();
+  if(!u)return;
+  $('bioNama').value=u.nama||'';
+  $('bioNim').value=u.nim||'';
+  $('bioKelas').value=u.kelas||'';
+  $('bioJurusan').value=u.jurusan||'';
+  $('bioEmail').value=u.email||'';
+  $('bioHp').value=u.hp||'';
+}
+function saveBiodata(){
+  hideErr('bioError');
+  const nama=$('bioNama').value.trim();
+  const kelas=$('bioKelas').value.trim();
+  const jurusan=$('bioJurusan').value;
+  const email=$('bioEmail').value.trim();
+  const hp=$('bioHp').value.trim();
+
+  if(!nama||nama.length<3){showErr('bioError','Nama minimal 3 karakter');return}
+  if(!kelas){showErr('bioError','Kelas wajib diisi');return}
+  if(!jurusan){showErr('bioError','Jurusan wajib dipilih');return}
+  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('bioError','Format email tidak valid');return}
+  if(hp&&!/^[0-9+\-\s]{8,15}$/.test(hp)){showErr('bioError','Format No. HP tidak valid');return}
+
+  const s=window.USER_SESSION;
+  const users=JSON.parse(localStorage.getItem(USERS_KEY)||'{}');
+  if(!users[s.username]){showErr('bioError','Akun tidak ditemukan');return}
+
+  users[s.username]={...users[s.username],nama,kelas,jurusan,email,hp,updatedAt:new Date().toISOString()};
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+
+  s.nama=nama;s.kelas=kelas;s.jurusan=jurusan;
+  localStorage.setItem(SESSION_KEY,JSON.stringify(s));
+
+  initUser();
+  showSuccess('bioSuccess','Biodata berhasil disimpan!');
+  toast('success','Tersimpan','Biodata kamu telah diperbarui');
+}
+function resetBiodata(){
+  if(!confirm('Reset form ke data terakhir?'))return;
+  loadBiodata();
+  hideErr('bioError');
+  toast('info','Reset','Form dikembalikan ke data terakhir');
+}
+
+/* ============================================================
+   MATKUL PICKER (NEW)
+============================================================ */
+function renderMatkulPicker(){
+  const sel=$('matkulSelect');
+  const master=getMasterMatkul();
+  const saya=getMatkulSaya();
+  const sudahAmbilIds=saya.map(m=>m.masterId);
+  const tersedia=master.filter(m=>!sudahAmbilIds.includes(m.id));
+
+  const currentValue=sel.value;
+  sel.innerHTML='<option value="">— Pilih Mata Kuliah —</option>';
+
+  if(tersedia.length===0){
+    sel.innerHTML='<option value="">— Tidak ada matkul tersedia —</option>';
+    sel.disabled=true;
+  } else {
+    sel.disabled=false;
+    tersedia.forEach(m=>{
+      const opt=document.createElement('option');
+      opt.value=m.id;
+      opt.textContent=`${m.kode?m.kode+' · ':''}${m.nama}${m.sks?' ('+m.sks+' SKS)':''}`;
+      sel.appendChild(opt);
+    });
+  }
+  if(sudahAmbilIds.includes(currentValue))sel.value='';
+}
+
+function ambilMatkul(){
+  hideErr('pickError');
+  const sel=$('matkulSelect');
+  const masterId=sel.value;
+  if(!masterId){showErr('pickError','Pilih mata kuliah dulu');return}
+
+  const master=getMasterMatkul();
+  const m=master.find(x=>x.id===masterId);
+  if(!m){showErr('pickError','Mata kuliah tidak ditemukan');return}
+
+  const saya=getMatkulSaya();
+  if(saya.some(x=>x.masterId===masterId)){showErr('pickError','Matkul ini sudah kamu ambil');return}
+
+  // Ambil snapshot data dari master
+  const snapshot={
+    id:'ms_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    masterId:m.id,
+    nama:m.nama,
+    kode:m.kode||'',
+    sks:m.sks||0,
+    dosen:m.dosen||'',
+    deskripsi:m.deskripsi||'',
+    takenAt:new Date().toISOString()
+  };
+  saya.push(snapshot);
+  saveMatkulSaya(saya);
+
+  sel.value='';
+  renderMatkulPicker();
+  renderMatkulSaya();
+  updateStats();
+  toast('success','Matkul diambil',`${m.nama} ditambahkan ke profil kamu`);
+}
+
+function lepasMatkul(id,nama){
+  if(!confirm(`Lepas mata kuliah "${nama}" dari profil kamu?`))return;
+  const saya=getMatkulSaya().filter(x=>x.id!==id);
+  saveMatkulSaya(saya);
+  renderMatkulPicker();
+  renderMatkulSaya();
+  updateStats();
+  toast('success','Dilepas',`${nama} dihapus dari profil kamu`);
+}
+
+function renderMatkulSaya(){
+  const list=getMatkulSaya();
+  const wrap=$('matkulList');
+  $('matkulDesc').textContent=`// ${list.length} mata kuliah diambil`;
+  $('matkulCount').textContent=list.length;
+
+  if(list.length===0){
+    wrap.innerHTML=`<div class="empty"><i class="fas fa-book-open"></i>Belum ada mata kuliah<small>Pilih dari dropdown di atas untuk menambahkan</small></div>`;
+    return;
+  }
+  wrap.innerHTML=list.map((m,i)=>{
+    const ini=(m.nama||'?').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    return `
+      <div class="matkul-item" style="animation-delay:${Math.min(i*20,300)}ms">
+        <div class="matkul-ic">${ini}</div>
+        <div class="matkul-info">
+          <div class="matkul-nama">${m.nama||'-'}</div>
+          <div class="matkul-meta">
+            ${m.kode?`<span class="m"><i class="fas fa-hashtag"></i> <strong>${m.kode}</strong></span>`:''}
+            ${m.sks?`<span class="m"><i class="fas fa-layer-group"></i> <strong>${m.sks} SKS</strong></span>`:''}
+            ${m.dosen?`<span class="m"><i class="fas fa-user-tie"></i> ${m.dosen}</span>`:''}
+          </div>
+        </div>
+        <div class="matkul-acts">
+          <button class="dgr" title="Lepas" onclick="lepasMatkul('${m.id}','${(m.nama||'').replace(/'/g,'&#39;')}')"><i class="fas fa-times"></i></button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function updateStats(){
+  $('statMatkul').textContent=getMatkulSaya().length;
+  const s=window.USER_SESSION;
+  $('statHadir').textContent=isHadirToday(s.nim)?'✓':'—';
+  $('statStatus').textContent='AKTIF';
+}
+
+/* ============================================================
+   PASSWORD
+============================================================ */
+function changePassword(){
+  hideErr('pwError');
+  const oldPw=$('pwOld').value;
+  const newPw=$('pwNew').value;
+  const confirm=$('pwConfirm').value;
+
+  if(!oldPw){showErr('pwError','Password lama wajib diisi');return}
+  if(!newPw||newPw.length<6){showErr('pwError','Password baru minimal 6 karakter');return}
+  if(newPw!==confirm){showErr('pwError','Konfirmasi password tidak cocok');return}
+
+  const s=window.USER_SESSION;
+  const users=JSON.parse(localStorage.getItem(USERS_KEY)||'{}');
+  const u=users[s.username];
+  if(!u){showErr('pwError','Akun tidak ditemukan');return}
+  if(u.password!==oldPw){showErr('pwError','Password lama salah');return}
+
+  users[s.username]={...u,password:newPw,updatedAt:new Date().toISOString()};
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+
+  ['pwOld','pwNew','pwConfirm'].forEach(id=>$(id).value='');
+  showSuccess('pwSuccess','Password berhasil diubah!');
+  toast('success','Tersimpan','Password kamu telah diperbarui');
+}
+
+/* ============================================================
+   THEME
+============================================================ */
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  $('themeBtn').innerHTML=`<i class="fas ${t==='dark'?'fa-sun':'fa-moon'}"></i>`;
+}
+function toggleTheme(){
+  const c=document.documentElement.getAttribute('data-theme')||'light';
+  const n=c==='dark'?'light':'dark';
+  applyTheme(n);localStorage.setItem('theme',n);
+}
+applyTheme(localStorage.getItem('theme')||'light');
+
+/* ============================================================
+   INIT
+============================================================ */
+setInterval(()=>{$('clockDisplay').textContent=new Date().toLocaleTimeString('id-ID',{hour12:false})},1000);
+
+function init(){
+  initUser();
+  loadBiodata();
+  renderMatkulPicker();
+  renderMatkulSaya();
+  updateStats();
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
