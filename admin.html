@@ -1251,9 +1251,17 @@ async function checkConnection(){
     throw new Error();
   }catch{setConn('offline','Offline');return false}
 }
+// FIXED: PERUBAHAN 4 - Sinkronkan status dari server
 function isHadirToday(nim){
-  const d=JSON.parse(localStorage.getItem('presensiHariIni')||'{}');
-  return d[nim]===today();
+  // Cek dari server dulu: kalau mhs.status === "Hadir" → return true
+  const m = State.mahasiswaData.find(m => m.nim === nim);
+  if (m && m.status === "Hadir") {
+    return true;
+  }
+
+  // Fallback ke localStorage 'presensiHariIni' (untuk backward compat)
+  const d = JSON.parse(localStorage.getItem('presensiHariIni') || '{}');
+  return d[nim] === today();
 }
 
 /* ============================================================
@@ -1495,22 +1503,24 @@ function renderUsers(){
    LOAD DATA MAHASISWA
 ============================================================ */
 function normalizeData(data){
+  // FIXED: PERUBAHAN 3 - normalizeData lebih tahan banting
   // Handle berbagai format kolom dari Google Sheets
   if(!Array.isArray(data))return [];
-  
+
   return data.map(row=>{
     if(!row)return null;
-    
+
     // Normalize field names (case-insensitive, handle berbagai variasi)
-    const nim=(row.NIM||row['NIM/NPM']||row.nim||'').toString().trim();
-    const nama=(row.Nama||row.nama||'').toString().trim();
+    const nim=(row.NIM||row['NIM/NPM']||row.nim||row.Npm||'').toString().trim();
+    const nama=(row.Nama||row.nama||row.NAMA||'').toString().trim();
     const kelas=(row.Kelas||row.kelas||'').toString().trim();
     const jurusan=(row.Jurusan||row.jurusan||'').toString().trim();
-    
+    const status=(row.Status||row.status||'').toString().trim();
+
     // Skip jika NIM kosong
     if(!nim)return null;
-    
-    return {nim,nama,kelas,jurusan};
+
+    return {nim,nama,kelas,jurusan,status};
   }).filter(r=>r!==null);
 }
 async function loadDataMahasiswa(){
@@ -1847,15 +1857,41 @@ function resetAdminScanner(){
   $('scanHint').textContent='Arahkan QR ke kamera';
 }
 
-function onAdminScanSuccess(decoded){
-  const nim=decoded.trim();
-  console.log('✓ QR scanned:',nim);
-  
-  if(adminScanner.html5QrCode&&adminScanner.scannerRunning){
-    adminScanner.html5QrCode.stop().then(()=>{adminScanner.scannerRunning=false}).catch(()=>{});
+// FIXED: PERUBAHAN 1 - Parsing QR yang benar
+	async function onAdminScanSuccess(decoded){
+  // Hentikan scanner dulu sebelum submit
+  if(adminScanner.html5QrCode && adminScanner.scannerRunning){
+    await adminScanner.html5QrCode.stop().catch(() => {});
+    adminScanner.scannerRunning = false;
+    $('scanStatus').textContent = 'Processing...';
+    $('scanHint').textContent = 'Memproses QR...';
   }
-  
-  submitAdminPresensi(nim);
+
+  let nim = '';
+  let parsedData = null;
+  try {
+    parsedData = JSON.parse(decoded);
+    nim = (parsedData.nim || '').trim();
+    console.log('✓ QR scanned (JSON parsed):', nim);
+  } catch (e) {
+    // Fallback: QR berisi NIM mentah
+    nim = decoded.trim();
+    console.log('✓ QR scanned (fallback to raw NIM):', nim);
+  }
+
+  if (!nim) {
+    toast('error','QR Error','QR Code tidak valid atau NIM kosong');
+    $('scanHint').classList.add('error');
+    $('scanHint').textContent = '❌ QR tidak valid, coba lagi';
+    setTimeout(() => {
+      $('scanHint').classList.remove('error');
+      $('scanHint').textContent = 'Arahkan QR ke kamera';
+      startAdminScanner(); // Restart scanner otomatis
+    }, 2000);
+    return;
+  }
+
+  submitAdminPresensi(nim, parsedData?.nama, parsedData?.kelas, parsedData?.jurusan);
 }
 
 async function submitAdminPresensi(nim){
@@ -1875,44 +1911,58 @@ async function submitAdminPresensi(nim){
     return;
   }
   
-  const waktu=new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'});
-  console.log('📡 Kirim presensi ke Google Sheets...');
-  
   try{
-    await fetch(WEB_APP_URL,{
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        action:'presensi',
-        nim:m.nim,
-        nama:m.nama,
-        kelas:m.kelas||'',
-        jurusan:m.jurusan||'',
-        matakul:adminScanner.selectedMatkul.nama,
-        kode:adminScanner.selectedMatkul.kode||'',
-        status:'Hadir',
-        waktu:waktu
+    const waktu=new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'});
+
+    // FIXED: PERUBAHAN 2 - submitAdminPresensi harus baca response
+    const res = await fetch(WEB_APP_URL,{
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain'},  // hindari preflight
+      body: JSON.stringify({
+        action: 'presensi',
+        nim: m.nim,
+        nama: m.nama,
+        kelas: m.kelas || '',
+        jurusan: m.jurusan || '',
+        matakul: adminScanner.selectedMatkul.nama,
+        kode: adminScanner.selectedMatkul.kode || '',
+        status: 'Hadir',
+        waktu: waktu
       })
     });
-    
-    adminScanResults.unshift({nim,nama:m.nama,matkul:adminScanner.selectedMatkul.nama,waktu,status:'✓ Hadir'});
-    renderScanResults();
-    
-    $('scanHint').classList.add('success');
-    $('scanHint').textContent='✓ '+m.nama+' - Hadir';
-    $('scanTotal').textContent=parseInt($('scanTotal').textContent||'0')+1;
-    toast('success','Presensi OK',`${m.nama} - ${adminScanner.selectedMatkul.nama}`);
+    const result = await res.json(); // cek result.success
+
+    if (result.success) {
+      // Update status di State supaya dashboard langsung reflect
+      const idx = State.mahasiswaData.findIndex(x => x.nim === nim);
+      if (idx >= 0) State.mahasiswaData[idx].status = 'Hadir';
+      localStorage.setItem('mahasiswaData', JSON.stringify(State.mahasiswaData));
+      renderList(); updateInfo();
+
+      adminScanResults.unshift({nim, nama: m.nama, matkul: adminScanner.selectedMatkul.nama, waktu, status: '✓ Hadir'});
+      renderScanResults();
+      $('scanHint').classList.add('success');
+      $('scanHint').textContent = '✓ ' + m.nama + ' - Hadir';
+      $('scanTotal').textContent = parseInt($('scanTotal').textContent || '0') + 1;
+      toast('success', 'Presensi OK', `${m.nama} - ${adminScanner.selectedMatkul.nama}`);
+    } else {
+      $('scanHint').classList.add('error');
+      $('scanHint').textContent = '❌ ' + (result.message || 'Gagal');
+      toast('error', 'Error', result.message || 'Gagal mengirim data');
+      if (result.found === false) {
+        $('scanHint').textContent = 'NIM tidak ada di sheet';
+      }
+    }
+
+    setTimeout(() => {
+      $('scanHint').classList.remove('success', 'error');
+      $('scanHint').textContent = 'Arahkan QR ke kamera';
+      if (!adminScanner.scannerRunning) startAdminScanner();
+    }, 2000);
   }catch(e){
     console.error('Error submit presensi:',e);
     toast('error','Gagal',e.message);
   }
-  
-  setTimeout(()=>{
-    $('scanHint').classList.remove('success','error');
-    $('scanHint').textContent='Arahkan QR ke kamera';
-    if(!adminScanner.scannerRunning)startAdminScanner();
-  },2000);
 }
 
 function renderScanResults(){
